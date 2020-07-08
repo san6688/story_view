@@ -1,20 +1,20 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'story_video.dart';
-import 'story_image.dart';
 
 import '../controller/story_controller.dart';
 import '../utils.dart';
+import 'story_image.dart';
+import 'story_video.dart';
 
 /// Indicates where the progress indicators should be placed.
 enum ProgressPosition { top, bottom }
 
 /// This is used to specify the height of the progress indicator. Inline stories
 /// should use [small]
-enum IndicatorHeight { small, large }
+enum IndicatorHeight { small, large, light }
 
 /// This is a representation of a story item (or page).
 class StoryItem {
@@ -394,6 +394,14 @@ class StoryView extends StatefulWidget {
   // Controls the playback of the stories
   final StoryController controller;
 
+  // size of progress indicator
+  final IndicatorHeight indicatorHeight;
+
+  // should show story header
+  final bool header;
+
+  final StoryHeader storyHeader;
+
   StoryView({
     @required this.storyItems,
     @required this.controller,
@@ -402,6 +410,9 @@ class StoryView extends StatefulWidget {
     this.progressPosition = ProgressPosition.top,
     this.repeat = false,
     this.inline = false,
+    this.header = false,
+    this.indicatorHeight = IndicatorHeight.small,
+    this.storyHeader,
     this.onVerticalSwipeComplete,
   })  : assert(storyItems != null && storyItems.length > 0,
             "[storyItems] should not be null or empty"),
@@ -634,13 +645,24 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
                       .toList(),
                   this._currentAnimation,
                   key: UniqueKey(),
-                  indicatorHeight: widget.inline
-                      ? IndicatorHeight.small
-                      : IndicatorHeight.large,
+                  indicatorHeight: widget.indicatorHeight,
                 ),
               ),
             ),
           ),
+          widget.header
+              ? Align(
+                  alignment: Alignment.topLeft,
+                  child: SafeArea(
+                    bottom: false,
+                    // we use SafeArea here for notched and bezeles phones
+                    child: Container(
+                      margin: EdgeInsets.only(top: 10, left: 20),
+                      child: widget.storyHeader,
+                    ),
+                  ),
+                )
+              : Container(),
           Align(
               alignment: Alignment.centerRight,
               heightFactor: 1,
@@ -775,8 +797,9 @@ class PageBarState extends State<PageBar> {
                 right: widget.pages.last == it ? 0 : this.spacing),
             child: StoryProgressIndicator(
               isPlaying(it) ? widget.animation.value : it.shown ? 1 : 0,
-              indicatorHeight:
-                  widget.indicatorHeight == IndicatorHeight.large ? 5 : 3,
+              indicatorHeight: widget.indicatorHeight == IndicatorHeight.large
+                  ? 5
+                  : widget.indicatorHeight == IndicatorHeight.small ? 3 : 1,
             ),
           ),
         );
@@ -812,6 +835,61 @@ class StoryProgressIndicator extends StatelessWidget {
         Colors.white.withOpacity(0.4),
         1.0,
       ),
+    );
+  }
+}
+
+class StoryHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final TextStyle titleStyle;
+  final TextStyle subtitleStyle;
+  final ImageProvider avatarImage;
+  final double avatarSize;
+
+  const StoryHeader({
+    Key key,
+    this.title,
+    this.subtitle,
+    this.titleStyle,
+    this.subtitleStyle,
+    this.avatarImage,
+    this.avatarSize = 22,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      padding: EdgeInsets.all(5),
+      child: Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
+        CircleAvatar(
+            backgroundColor: Colors.white,
+            radius: avatarSize + 4,
+            child: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                radius: avatarSize + 2,
+                child: CircleAvatar(
+                  backgroundImage: avatarImage,
+                  radius: avatarSize,
+                ))),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 8),
+                child: Text(title, style: titleStyle),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 2, left: 8),
+                child: Text(subtitle, style: subtitleStyle),
+              ),
+            ],
+          ),
+        )
+      ]),
     );
   }
 }
