@@ -380,6 +380,9 @@ class StoryView extends StatefulWidget {
   /// Callback for when a story is currently being shown.
   final ValueChanged<StoryItem> onStoryShow;
 
+  /// callback to get index when a story is currently being shown.
+  final ValueChanged<int> getStoryShowIndex;
+
   /// Where the progress indicator should be placed.
   final ProgressPosition progressPosition;
 
@@ -407,6 +410,7 @@ class StoryView extends StatefulWidget {
     @required this.controller,
     this.onComplete,
     this.onStoryShow,
+    this.getStoryShowIndex,
     this.progressPosition = ProgressPosition.top,
     this.repeat = false,
     this.inline = false,
@@ -523,6 +527,10 @@ class StoryViewState extends State<StoryView> with TickerProviderStateMixin {
 
     if (widget.onStoryShow != null) {
       widget.onStoryShow(storyItem);
+    }
+
+    if (widget.getStoryShowIndex != null) {
+      widget.getStoryShowIndex(widget.storyItems.indexOf(storyItem));
     }
 
     _animationController =
